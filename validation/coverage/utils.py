@@ -113,6 +113,12 @@ def build_dataset_3d(obs):
     dataset = maker_safe.run(dataset, obs)
     return dataset
 
+def create_on_off_dataset(dataset):
+    return SpectrumDatasetOnOff.from_spectrum_dataset(
+            dataset=dataset, acceptance=1, acceptance_off=10,
+            name=dataset.name   # keeping the same name is necessary to keep flux points geometries aligned
+        )
+
 def fake_dataset_3d(dataset, model):
     dataset = dataset.copy(name=dataset.name)
     dataset.models = Models([model.copy(name="source")])
@@ -120,10 +126,7 @@ def fake_dataset_3d(dataset, model):
     return dataset
 
 def fake_dataset_on_off(dataset, model):
-    dataset_on_off = SpectrumDatasetOnOff.from_spectrum_dataset(
-        dataset=dataset, acceptance=1, acceptance_off=10,
-        name=dataset.name   # keeping the same name is necessary to keep flux points geometries aligned
-    )
+    dataset_on_off = create_on_off_dataset(dataset)
     dataset_on_off.models = model.copy(name="source")
 
     dataset_on_off.fake(npred_background=dataset.npred_background())

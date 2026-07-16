@@ -15,7 +15,7 @@ from gammapy.utils.parallel import run_multiprocessing, multiprocessing_manager
 
 from utils import (build_observation, build_dataset_1d, build_dataset_3d,
                    build_model, fake_and_apply_fpe, create_coverage_figure, fake_and_apply_fe,
-                   create_sensitivity_figure)
+                   create_sensitivity_figure, create_on_off_dataset)
 AVAILABLE_GEOMS = ["1d", "3d"]
 
 log = logging.getLogger(__name__)
@@ -129,9 +129,17 @@ def run_sensitivity_coverage(geometries, livetime, threshold, scan_range, n_samp
         ref_fraction = 0.1
         model = build_model(percent_crab=ref_fraction)
         fe = FluxEstimator(**fe_config)
-        dataset.models = model
-        res = fe.run([dataset])
+        
+        if geometry == "1d":
+            dataset_on_off = create_on_off_dataset(dataset)
+            dataset_on_off.counts_off = dataset.background / dataset_on_off.alpha 
+            dataset_on_off.models = model
+            res = fe.run([dataset_on_off])
+        else:
+            dataset.models = model
+            res = fe.run([dataset])
         sensitivity_asimov = res['norm_sensitivity']*ref_fraction
+        
         log.info(f"Asimov sensitivity for observation is {sensitivity_asimov:.3f} crab.")
         sensitivity_amplitude = build_model(percent_crab=sensitivity_asimov).spectral_model.amplitude.quantity
 
